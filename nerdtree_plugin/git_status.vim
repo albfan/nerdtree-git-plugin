@@ -14,7 +14,9 @@ if exists('g:loaded_nerdtree_git_status')
 endif
 let g:loaded_nerdtree_git_status = 1
 let g:CustomIgnoreMappings = {
-         \ "statusFilter":{"key":"fs", "description":"git status filter", "enabled": 0, "callback":"toggleGitStatusFilter"},
+         \ "touchedFilter":{"key":"ft", "description":"git touched filter", "enabled": 0, "callback":"toggleGitTouchedFilter"},
+         \ "stagedFilter":{"key":"fs", "description":"git staged filter", "enabled": 0, "callback":"toggleGitStagedFilter"},
+         \ "unstagedFilter":{"key":"fu", "description":"git unstaged filter", "enabled": 0, "callback":"toggleGitUnstagedFilter"},
          \ "excludeFilter":{"key":"fe", "description":"git exclude filter", "enabled": 1, "callback":"toggleGitExcludeFilter"},
          \ "ignoreFilter":{"key":"fi", "description":"git ignore filter", "enabled": 1, "callback":"toggleGitIgnoreFilter"}
          \}
@@ -141,7 +143,9 @@ function g:GitIgnoreRegex(fname)
 endfunction
 
 function! NERDTreeGitStatusIgnoreFilter(params)
-    if !g:CustomIgnoreMappings["statusFilter"]["enabled"]
+    if !g:CustomIgnoreMappings["touchedFilter"]["enabled"] &&
+             \ !g:CustomIgnoreMappings["stagedFilter"]["enabled"] &&
+             \ !g:CustomIgnoreMappings["unstagedFilter"]["enabled"]
        return
     endif
     if !exists('b:NOT_A_GIT_REPOSITORY')
@@ -157,9 +161,38 @@ function! NERDTreeGitStatusIgnoreFilter(params)
     let pathStr = substitute(pathStr, fnameescape(cwd), "", "")
 
     if path.isDirectory
+        "TODO: something to fix on filtered directories
         let statusKey = get(b:NERDTreeCachedGitDirtyDir, fnameescape(pathStr . '/'), "")
+        if g:CustomIgnoreMappings["stagedFilter"]["enabled"] &&
+                    \ !g:CustomIgnoreMappings["unstagedFilter"]["enabled"]
+            "only staged files
+            if statusKey == "Dirty"
+                let statusKey = ""
+            endif
+        endif
+        if g:CustomIgnoreMappings["unstagedFilter"]["enabled"] &&
+                    \ !g:CustomIgnoreMappings["stagedFilter"]["enabled"]
+            "only unstaged files
+            if statusKey == "Clean"
+                let statusKey = ""
+            endif
+        endif
     else
         let statusKey = get(b:NERDTreeCachedGitFileStatus, fnameescape(pathStr), "")
+        if g:CustomIgnoreMappings["stagedFilter"]["enabled"] &&
+                    \ !g:CustomIgnoreMappings["unstagedFilter"]["enabled"]
+            "only staged files
+            if statusKey != "Staged"
+                let statusKey = ""
+            endif
+        endif
+        if g:CustomIgnoreMappings["unstagedFilter"]["enabled"] &&
+                    \ !g:CustomIgnoreMappings["stagedFilter"]["enabled"]
+            "only unstaged files
+            if statusKey == "Staged"
+                let statusKey = ""
+            endif
+        endif
     endif
     if statusKey == ""
         return 1
@@ -339,8 +372,20 @@ function! s:toggleGitExcludeFilter()
     call b:NERDTree.ui.centerView()
 endfunction
 
-function! s:toggleGitStatusFilter()
-    let g:CustomIgnoreMappings["statusFilter"]["enabled"] = !g:CustomIgnoreMappings["statusFilter"]["enabled"]
+function! s:toggleGitTouchedFilter() 
+    let g:CustomIgnoreMappings["touchedFilter"]["enabled"] = !g:CustomIgnoreMappings["touchedFilter"]["enabled"]
+    call b:NERDTree.ui.renderViewSavingPosition()
+    call b:NERDTree.ui.centerView()
+endfunction
+
+function! s:toggleGitStagedFilter() 
+    let g:CustomIgnoreMappings["stagedFilter"]["enabled"] = !g:CustomIgnoreMappings["stagedFilter"]["enabled"]
+    call b:NERDTree.ui.renderViewSavingPosition()
+    call b:NERDTree.ui.centerView()
+endfunction
+
+function! s:toggleGitUnstagedFilter() 
+    let g:CustomIgnoreMappings["unstagedFilter"]["enabled"] = !g:CustomIgnoreMappings["unstagedFilter"]["enabled"]
     call b:NERDTree.ui.renderViewSavingPosition()
     call b:NERDTree.ui.centerView()
 endfunction
@@ -406,12 +451,12 @@ endfunction
 augroup nerdtreegitplugin
     autocmd BufWritePost * call s:FileUpdate(expand('%:p'))
 augroup END
+
 " FUNCTION: s:FileUpdate(fname) {{{2
 function! s:FileUpdate(fname)
     if g:NERDTreeUpdateOnWrite != 1
         return
     endif
-
     if !g:NERDTree.IsOpen()
         return
     endif
@@ -440,6 +485,7 @@ endfunction
 augroup AddHighlighting
     autocmd FileType nerdtree call s:AddHighlighting()
 augroup END
+
 function! s:AddHighlighting()
     let l:synmap = {
                 \ 'NERDTreeGitStatusModified'    : s:NERDTreeGetIndicator('Modified'),
