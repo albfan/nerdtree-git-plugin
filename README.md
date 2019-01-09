@@ -14,7 +14,7 @@ The original project [git-nerdtree](https://github.com/Xuyuanp/git-nerdtree) wil
 
 For Pathogen
 
-`git clone https://github.com/Xuyuanp/nerdtree-git-plugin.git ~/.vim/bundle/nerdtree-git-plugin`
+`git clone https://github.com/albfan/nerdtree-git-plugin.git ~/.vim/bundle/nerdtree-git-plugin`
 
 Now reload the `vim`
 
@@ -22,19 +22,19 @@ For Vundle
 
 `Plugin 'scrooloose/nerdtree'`
 
-`Plugin 'Xuyuanp/nerdtree-git-plugin'`
+`Plugin 'albfan/nerdtree-git-plugin'`
 
 For NeoBundle
 
 `NeoBundle 'scrooloose/nerdtree'`
 
-`NeoBundle 'Xuyuanp/nerdtree-git-plugin'`
+`NeoBundle 'albfan/nerdtree-git-plugin'`
 
 For Plug
 
 `Plug 'scrooloose/nerdtree'`
 
-`Plug 'Xuyuanp/nerdtree-git-plugin'`
+`Plug 'albfan/nerdtree-git-plugin'`
 
 ## FAQ
 
